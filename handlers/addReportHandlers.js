@@ -1,5 +1,6 @@
 // addReportHandlers.js
 const { userStates } = require("../menu");
+const { loadData } = require("../data");
 
 async function handleAddReport(bot, chatId, userId, queryId) {
   const allData = loadData();
