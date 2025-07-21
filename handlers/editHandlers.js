@@ -1,7 +1,7 @@
 // editHandlers.js
 const { loadData, saveData, getTodayDate } = require("../data");
 const { userStates } = require("../menu");
-const { sendMainMenu } = require("../menu");
+
 
 async function handleEditReport(bot, chatId, userId, queryId) {
   const allData = loadData();
@@ -14,11 +14,11 @@ async function handleEditReport(bot, chatId, userId, queryId) {
   const buttons = customers.map((name) => [
     { text: name, callback_data: `edit_select_customer:${name}` },
   ]);
-  buttons.push([{ text: "🔙 Back to Menu", callback_data: "back_to_menu" }]);
+  buttons.push([{ text: "🔙 برگشت به منوی اصلی", callback_data: "back_to_menu" }]);
 
   const message = await bot.sendMessage(
     chatId,
-    "Select a customer to edit their reports:",
+    "یک شخص را برای ادیت کردن :",
     {
       reply_markup: { inline_keyboard: buttons },
     }
@@ -44,11 +44,11 @@ async function handleEditSelectCustomer(bot, chatId, queryId, customer) {
       callback_data: `edit_report_text:${customer}:${i}`,
     },
   ]);
-  buttons.push([{ text: "🔙 Back to Menu", callback_data: "back_to_menu" }]);
+  buttons.push([{ text: "🔙 برگشت به صفحه اصلی", callback_data: "back_to_menu" }]);
 
   const message = await bot.sendMessage(
     chatId,
-    `Select a report to edit for *${customer}*:`,
+    `یک گزارش را برای ویرایش انتخاب کنید *${customer}*:`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: buttons },
@@ -72,7 +72,7 @@ async function handleEditReportText(bot, chatId, queryId, customer, indexStr) {
 
   await bot.sendMessage(
     chatId,
-    `✏️ Send new text for the report dated *${getTodayDate()}* for customer *${customer}*:`,
+    `✏️ متن جدید مربوط به تاریخ *${getTodayDate()}* برای شخص *${customer}* را بنویسید:`,
     { parse_mode: "Markdown" }
   );
   await bot.answerCallbackQuery(queryId.id || queryId);
