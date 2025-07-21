@@ -56,9 +56,6 @@ function registerHandlers(bot) {
 
       delete userStates[userId];
 
-      data[customer].push({ date: today, report: text });
-      saveData(data);
-
       // Save to Google Sheets
       try {
         await appendReportToSheet({
