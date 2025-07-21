@@ -9,7 +9,6 @@ async function sendMainMenu(bot, chatId, userId) {
                 [{ text: "✏️ Edit Report", callback_data: "edit_report" }],
                 [{ text: "🗑️ Delete Report", callback_data: "delete_report" }]
             ]
-
         }
     });
 

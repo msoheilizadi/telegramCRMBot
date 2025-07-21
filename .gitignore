@@ -40,3 +40,5 @@ build/
 
 # Mac system files
 Icon?
+
+/secrets/
