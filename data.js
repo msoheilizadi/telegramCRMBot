@@ -1,5 +1,7 @@
 const fs = require('fs');
 const { DATA_FILE } = require('./config');
+const moment = require('moment-jalaali');
+moment.loadPersian({ dialect: 'persian-modern', usePersianDigits: false });
 
 function loadData() {
     if (!fs.existsSync(DATA_FILE)) return {};
@@ -11,7 +13,7 @@ function saveData(data) {
 }
 
 function getTodayDate() {
-    return new Date().toISOString().split('T')[0];
+  return moment().format('jYYYY/jMM/jDD'); // Example: 1403/04/30
 }
 
 module.exports = { loadData, saveData, getTodayDate };
