@@ -43,35 +43,63 @@ async function handleViewHistory(bot, chatId, userId, queryId) {
     return bot.sendMessage(chatId, "❌ No customers found.");
   }
 
-  const buttons = customers.map((name) => [
-    { text: name, callback_data: `history:${name}` },
+  // Use index as callback_data suffix to keep it short and valid
+  const buttons = customers.map((name, idx) => [
+    {
+      text: name,
+      callback_data: `history:${idx}`, // Use index instead of full name or encoded name
+    },
   ]);
   buttons.push([{ text: "🔙 Back to Menu", callback_data: "back_to_menu" }]);
 
-  const message = await bot.sendMessage(
-    chatId,
-    "📚 Select a customer to view their history:",
-    { reply_markup: { inline_keyboard: buttons } }
-  );
+  try {
+    const message = await bot.sendMessage(
+      chatId,
+      "📚 Select a customer to view their history:",
+      { reply_markup: { inline_keyboard: buttons } }
+    );
 
-  userStates[userId] = { lastBotMessageId: message.message_id };
-  await bot.answerCallbackQuery(queryId.id || queryId);
+    userStates[userId] = { ...userStates[userId], lastBotMessageId: message.message_id };
+    await bot.answerCallbackQuery(queryId.id || queryId);
+  } catch (err) {
+    console.error("Failed to send history menu:", err);
+  }
 }
 
-async function handleHistory(bot, chatId, queryId, customerName) {
+async function handleHistory(bot, chatId, queryId, customerIndexStr) {
   const allData = loadData();
+  const customers = Object.keys(allData);
+
+  const index = parseInt(customerIndexStr, 10);
+  if (isNaN(index) || !customers[index]) {
+    return bot.sendMessage(chatId, "❌ Invalid customer selected.");
+  }
+
+  const customerName = customers[index];
   const history = allData[customerName];
 
   if (!history || history.length === 0) {
     return bot.sendMessage(chatId, `❌ No reports found for ${customerName}.`);
   }
 
+  // Build response with length check
+  const maxLength = 4000;
   let response = `📄 Report history for ${customerName}:\n\n`;
-  history.forEach((entry) => {
-    response += `🗓️ ${entry.date}:\n${entry.report}\n\n`;
-  });
 
-  await bot.sendMessage(chatId, response);
+  for (const entry of history) {
+    const entryText = `🗓️ ${entry.date}:\n${entry.report}\n\n`;
+    if ((response + entryText).length > maxLength) {
+      await bot.sendMessage(chatId, response);
+      response = entryText; // reset response for next batch
+    } else {
+      response += entryText;
+    }
+  }
+
+  if (response.length > 0) {
+    await bot.sendMessage(chatId, response);
+  }
+
   await bot.sendMessage(chatId, "🔽", {
     reply_markup: {
       inline_keyboard: [[{ text: "🔙 Back to Menu", callback_data: "back_to_menu" }]],
@@ -80,6 +108,7 @@ async function handleHistory(bot, chatId, queryId, customerName) {
 
   await bot.answerCallbackQuery(queryId.id || queryId);
 }
+
 
 async function handleCallbackQuery(bot, query) {
   const chatId = query.message.chat.id;
