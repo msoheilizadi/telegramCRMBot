@@ -1,6 +1,6 @@
 const { loadData, saveData, getTodayDate } = require("./data");
 const { isAuthorized, deletePreviousMessage } = require("./auth");
-const { sendMainMenu, userStates } = require("./menu");
+const { sendMainMenu, userStates, sendBackToMenuButton } = require("./menu");
 const { appendReportToSheet, loadDataFromSheet } = require("./services/index");
 const { handleCallbackQuery } = require("./handlers/callbackQueryHandler");
 
@@ -36,7 +36,8 @@ function registerHandlers(bot) {
 
       console.log("✅ customer_reports overwritten and saved.");
 
-      await sendMainMenu(bot, chatId, userId);
+      await sendMainMenu(bot, chatId, msg.from.id);
+      await sendBackToMenuButton(bot, chatId);
     } catch (error) {
       console.error("❌ Error loading or saving customer reports:", error);
       bot.sendMessage(chatId, "⚠️ Failed to load customer reports. Please try again.");
@@ -58,18 +59,23 @@ function registerHandlers(bot) {
     const userId = msg.from.id;
     const text = msg.text?.trim();
 
+    if (text && text.includes("منو اصلی")) {
+      return sendMainMenu(bot, chatId, msg.from.id);
+    }
+
     const user = userStates[userId];
     if (!user || !user.step) return;
     if (!isAuthorized(userId)) return;
 
     const data = loadData();
 
+
+
+
     if (user.step === "waiting_new_customer_name") {
       user.customerName = text;
       user.step = "waiting_report_text";
-      return bot.sendMessage(chatId, `✏️ حالا متن گزارش رو برای بنویس *${text}*:`, {
-        parse_mode: "Markdown",
-      });
+      return bot.sendMessage(chatId, `✏️ حالا متن گزارش رو برای بنویس *${text}*:`);
     }
 
     if (user.step === "waiting_report_text") {

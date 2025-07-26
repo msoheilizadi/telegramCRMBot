@@ -141,9 +141,7 @@ async function handleDeleteConfirm(bot, chatId, queryId, customerHash, reportInd
 
   await bot.sendMessage(
     chatId,
-    `✅ گزارش مربوط به پاک شد *${realCustomerName}*:\n\n${deletedReport.report}`,
-    { parse_mode: "Markdown" }
-  );
+    `✅ گزارش مربوط به پاک شد *${realCustomerName}*:\n\n${deletedReport.report}`);
 
   // Send main menu
   await sendMainMenu(bot, chatId, userId);

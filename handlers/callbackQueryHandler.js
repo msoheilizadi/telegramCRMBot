@@ -155,4 +155,4 @@ async function handleCallbackQuery(bot, query) {
   await bot.answerCallbackQuery(query.id);
 }
 
-module.exports = { handleCallbackQuery };
+module.exports = { handleCallbackQuery, deletePreviousMessage };

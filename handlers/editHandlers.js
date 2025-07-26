@@ -12,9 +12,9 @@ async function handleEditReport(bot, chatId, userId, queryId) {
   }
 
   const buttons = customers.map((name) => {
-    const hash = crypto.createHash('md5').update(name).digest('hex').slice(0, 10);
-    return [{ text: name, callback_data: `edit_select_customer:${hash}` }];
+    return [{ text: name, callback_data: `edit_select_customer:${name}` }];
   });
+
   buttons.push([{ text: "🔙 برگشت به منوی اصلی", callback_data: "back_to_menu" }]);
 
   const message = await bot.sendMessage(

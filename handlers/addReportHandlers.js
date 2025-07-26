@@ -34,9 +34,7 @@ async function handleAddReport(bot, chatId, userId, queryId) {
 async function handleAddReportExistingCustomer(bot, chatId, queryId, customerName) {
   userStates[queryId.from.id] = { step: "waiting_report_text", customerName };
 
-  await bot.sendMessage(chatId, `✏️ گزارش مربوط را بنویس *${customerName}*:`, {
-    parse_mode: "Markdown",
-  });
+  await bot.sendMessage(chatId, `✏️ گزارش مربوط را بنویس *${customerName}*:`);
   await bot.answerCallbackQuery(queryId.id || queryId);
 }
 
