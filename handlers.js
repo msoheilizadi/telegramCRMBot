@@ -1,7 +1,7 @@
 const { loadData, saveData, getTodayDate } = require("./data");
 const { isAuthorized, deletePreviousMessage } = require("./auth");
 const { sendMainMenu, userStates } = require("./menu");
-const { appendReportToSheet } = require("./services/index");
+const { appendReportToSheet, loadDataFromSheet } = require("./services/index");
 const { handleCallbackQuery } = require("./handlers/callbackQueryHandler");
 
 function registerHandlers(bot) {
@@ -9,14 +9,40 @@ function registerHandlers(bot) {
   bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
+
     if (!isAuthorized(userId)) {
-      return bot.sendMessage(
-        chatId,
-        "❌ You are not authorized to use this bot."
-      );
+      return bot.sendMessage(chatId, "❌ You are not authorized to use this bot.");
     }
-    await sendMainMenu(bot, chatId, userId);
+
+    try {
+      const data = await loadDataFromSheet();
+
+      const customer_reports = {};  // NEW object, no loading from JSON
+
+      // Skip header row (assuming loadDataFromSheet returns all rows including header)
+      data.slice(1).forEach(entry => {
+        if (!customer_reports[entry.customer]) {
+          customer_reports[entry.customer] = [];
+        }
+        customer_reports[entry.customer].push({
+          date: entry.date,
+          report: entry.report,
+          userId: entry.userId,
+          rowNumber: entry.rowNumber,
+        });
+      });
+
+      saveData(customer_reports);  // Overwrites the JSON file
+
+      console.log("✅ customer_reports overwritten and saved.");
+
+      await sendMainMenu(bot, chatId, userId);
+    } catch (error) {
+      console.error("❌ Error loading or saving customer reports:", error);
+      bot.sendMessage(chatId, "⚠️ Failed to load customer reports. Please try again.");
+    }
   });
+
 
   bot.on("callback_query", (query) => {
     // answer immediately (fire & forget)

@@ -1,14 +1,18 @@
 // addReportHandlers.js
 const { userStates } = require("../menu");
 const { loadData } = require("../data");
+const crypto = require('crypto');
 
 async function handleAddReport(bot, chatId, userId, queryId) {
   const allData = loadData();
   const customers = Object.keys(allData);
 
-  const buttons = customers.map((name) => [
-    { text: name, callback_data: `add_report_existing_customer:${name}` },
-  ]);
+  const buttons = customers.map((name) => {
+    const hash = crypto.createHash('md5').update(name).digest('hex').slice(0, 10);
+    return [{ text: name, callback_data: `add_report_existing_customer:${hash}` }];
+  });
+
+
   buttons.push([
     {
       text: "➕ اضافه کردن مشتری جدید",

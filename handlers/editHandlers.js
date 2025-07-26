@@ -1,7 +1,7 @@
 // editHandlers.js
 const { loadData, saveData, getTodayDate } = require("../data");
 const { userStates } = require("../menu");
-
+const crypto = require('crypto');
 
 async function handleEditReport(bot, chatId, userId, queryId) {
   const allData = loadData();
@@ -11,9 +11,10 @@ async function handleEditReport(bot, chatId, userId, queryId) {
     return bot.sendMessage(chatId, "❌ No customers found.");
   }
 
-  const buttons = customers.map((name) => [
-    { text: name, callback_data: `edit_select_customer:${name}` },
-  ]);
+  const buttons = customers.map((name) => {
+    const hash = crypto.createHash('md5').update(name).digest('hex').slice(0, 10);
+    return [{ text: name, callback_data: `edit_select_customer:${hash}` }];
+  });
   buttons.push([{ text: "🔙 برگشت به منوی اصلی", callback_data: "back_to_menu" }]);
 
   const message = await bot.sendMessage(
