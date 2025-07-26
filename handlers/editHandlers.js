@@ -3,6 +3,14 @@ const { loadData, saveData, getTodayDate } = require("../data");
 const { userStates } = require("../menu");
 const crypto = require('crypto');
 
+// Removes unsafe characters and limits length
+function sanitizeText(text) {
+  return text
+    .replace(/[^\p{L}\p{N}\s.,!?()،:؛\-]/gu, "") // remove anything unsafe
+    .substring(0, 30); // keep the text short for button display
+}
+
+
 async function handleEditReport(bot, chatId, userId, queryId) {
   const allData = loadData();
   const customers = Object.keys(allData);
@@ -39,12 +47,11 @@ async function handleEditSelectCustomer(bot, chatId, queryId, customer) {
 
   const buttons = reports.map((rep, i) => [
     {
-      text: `${rep.date}: ${rep.report.substring(0, 20)}${
-        rep.report.length > 20 ? "..." : ""
-      }`,
+      text: `${rep.date}: ${sanitizeText(rep.report)}`,
       callback_data: `edit_report_text:${customer}:${i}`,
     },
   ]);
+
   buttons.push([{ text: "🔙 برگشت به صفحه اصلی", callback_data: "back_to_menu" }]);
 
   const message = await bot.sendMessage(

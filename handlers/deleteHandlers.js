@@ -43,6 +43,16 @@ async function handleDeleteReport(bot, chatId, userId, queryId) {
   await bot.answerCallbackQuery(queryId.id || queryId);
 }
 
+function sanitizeButtonText(text, maxLength = 30) {
+  const cleaned = (text || "")
+    .replace(/[^\p{L}\p{N}\p{P}\p{Z}]/gu, "") // remove bad characters
+    .replace(/\s+/g, " ")                     // normalize spaces
+    .trim();
+
+  if (cleaned.length <= maxLength) return cleaned;
+  return cleaned.slice(0, maxLength) + "...";
+}
+
 async function handleDeleteSelectCustomer(bot, chatId, queryId, customerHash) {
   // Retrieve hash map from userStates
   const userId = queryId.from.id || queryId.from;
@@ -66,8 +76,8 @@ async function handleDeleteSelectCustomer(bot, chatId, queryId, customerHash) {
 
   const buttons = reports.map((rep, i) => [
     {
-      text: `${rep.date}: ${rep.report.substring(0, 20)}${rep.report.length > 20 ? "..." : ""}`,
-      callback_data: `delete_confirm:${customerHash}:${i}`, // Keep hash here to decode later
+      text: `${rep.date}: ${sanitizeButtonText(rep.report, 30)}`,
+      callback_data: `delete_confirm:${customerHash}:${i}`,
     },
   ]);
   buttons.push([{ text: "🔙 برگشت به منو اصلی", callback_data: "back_to_menu" }]);
