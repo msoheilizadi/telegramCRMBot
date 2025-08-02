@@ -16,6 +16,7 @@ const {
   handleAddReportExistingCustomer,
   handleAddReportNewCustomer,
 } = require("./addReportHandlers");
+const { appendReportToSheet } = require("../services/index");
 
 async function deletePreviousMessage(bot, chatId, userId) {
   const userState = userStates[userId] || {};
@@ -59,7 +60,10 @@ async function handleViewHistory(bot, chatId, userId, queryId) {
       { reply_markup: { inline_keyboard: buttons } }
     );
 
-    userStates[userId] = { ...userStates[userId], lastBotMessageId: message.message_id };
+    userStates[userId] = {
+      ...userStates[userId],
+      lastBotMessageId: message.message_id,
+    };
     await bot.answerCallbackQuery(queryId.id || queryId);
   } catch (err) {
     console.error("Failed to send history menu:", err);
@@ -102,17 +106,19 @@ async function handleHistory(bot, chatId, queryId, customerIndexStr) {
 
   await bot.sendMessage(chatId, "🔽", {
     reply_markup: {
-      inline_keyboard: [[{ text: "🔙 Back to Menu", callback_data: "back_to_menu" }]],
+      inline_keyboard: [
+        [{ text: "🔙 Back to Menu", callback_data: "back_to_menu" }],
+      ],
     },
   });
 
   await bot.answerCallbackQuery(queryId.id || queryId);
 }
 
-
 async function handleCallbackQuery(bot, query) {
   const chatId = query.message.chat.id;
   const userId = query.from.id;
+  const user = userStates[userId];
   const callbackData = query.data;
 
   if (!isAuthorized(userId)) {
@@ -123,6 +129,78 @@ async function handleCallbackQuery(bot, query) {
   }
 
   await deletePreviousMessage(bot, chatId, userId);
+
+  if (callbackData === "confirm_meeting_yes") {
+    user.step = "waiting_meeting_date";
+    bot.answerCallbackQuery(query.id);
+    return bot.sendMessage(
+      chatId,
+      "📅 لطفا تاریخ جلسه را وارد کن (مثلاً 1404-08-22):"
+    );
+  }
+
+  if (callbackData === "confirm_meeting_no") {
+    bot.answerCallbackQuery(query.id);
+
+    try {
+      await appendReportToSheet({
+        customer: user.customerName,
+        date: user.reportDate,
+        report: user.reportText,
+      });
+    } catch (err) {
+      console.error("❌ Failed to save to Google Sheets:", err.message);
+    }
+
+    delete userStates[userId];
+    await sendMainMenu(bot, chatId, userId);
+    return bot.sendMessage(chatId, `✅ گزارش بدون جلسه ذخیره شد.`);
+  }
+
+  if (callbackData === "confirm_send_file_yes") {
+    bot.answerCallbackQuery(query.id);
+
+    const tomorrow = moment().add(1, "day").format("jYYYY-jMM-jDD");
+
+    try {
+      await appendReportToSheet({
+        customer: user.customerName,
+        date: user.reportDate,
+        report: user.reportText,
+        remindType: "task",
+        remindDate: tomorrow,
+      });
+    } catch (err) {
+      console.error("❌ Failed to save to Google Sheets:", err.message);
+    }
+
+    delete userStates[userId];
+    await sendMainMenu(bot, chatId, userId);
+
+    return bot.sendMessage(
+      chatId,
+      `✅ گزارش ذخیره شد و یادآور ارسال فایل برای ${tomorrow} تنظیم شد (موقت، بدون ذخیره).`
+    );
+  }
+
+  if (callbackData === "confirm_send_file_no") {
+    bot.answerCallbackQuery(query.id);
+
+    try {
+      await appendReportToSheet({
+        customer: user.customerName,
+        date: user.reportDate,
+        report: user.reportText,
+      });
+    } catch (err) {
+      console.error("❌ Failed to save to Google Sheets:", err.message);
+    }
+
+    delete userStates[userId];
+    await sendMainMenu(bot, chatId, userId);
+
+    return bot.sendMessage(chatId, `✅ گزارش بدون یادآور ارسال فایل ذخیره شد.`);
+  }
 
   if (callbackData === "back_to_menu") {
     return handleBackToMenu(bot, chatId, userId, query.id);
