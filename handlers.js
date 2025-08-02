@@ -8,6 +8,9 @@ const {
 } = require("./services/index");
 const { handleCallbackQuery } = require("./handlers/callbackQueryHandler");
 const moment = require("moment-jalaali");
+const cron = require("node-cron");
+require("moment-timezone");
+moment.loadPersian({ dialect: "persian-modern", usePersianDigits: false });
 
 const keywords = ["جلسه", "پرزنت", "حضوری", "meeting"];
 const keywords2 = ["تماس", "ارسال", "فرستادن"];
@@ -37,6 +40,41 @@ function isValidJalaaliDate(dateStr) {
 function registerHandlers(bot) {
   // /start command
 
+
+
+  // Run every day at 9 AM and 5 PM Tehran time
+  const scheduleReminders = (bot) => {
+    const tehranTime = "Asia/Tehran";
+    console.log("🕒 Reminder jobs scheduled for 9 AM and 5 PM Tehran time.");
+
+    // 9:00 AM Tehran time
+    cron.schedule(
+      "0 9 * * *",
+      async () => {
+        const now = moment().tz(tehranTime).format("HH:mm");
+        console.log(`⏰ Triggered reminder at ${now} (Tehran time, 9 AM)`);
+        await checkAndSendReminders(bot);
+      },
+      {
+        timezone: tehranTime,
+      }
+    );
+
+    // 5:00 PM Tehran time
+    cron.schedule(
+      "0 17 * * *",
+      async () => {
+        const now = moment().tz(tehranTime).format("HH:mm");
+        console.log(`⏰ Triggered reminder at ${now} (Tehran time, 5 PM)`);
+        await checkAndSendReminders(bot);
+      },
+      {
+        timezone: tehranTime,
+      }
+    );
+  };
+
+  scheduleReminders(bot);
   bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
