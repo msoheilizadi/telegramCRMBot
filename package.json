@@ -15,6 +15,7 @@
     "dotenv": "^17.2.0",
     "googleapis": "^153.0.0",
     "moment-jalaali": "^0.10.4",
+    "node-cron": "^4.2.1",
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.66.0"
   }
